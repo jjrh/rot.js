@@ -833,13 +833,17 @@ ROT.Display.prototype.eventToPosition = function(e) {
  * @param {string} [bg] background color
  */
 ROT.Display.prototype.draw = function(x, y, ch, fg, bg) {
+//    console.log("ROT.Display.prototype.draw")
 	if (!fg) { fg = this._options.fg; }
 	if (!bg) { bg = this._options.bg; }
+        console.log("ch:","y")
+    ch="y"
 	this._data[x+","+y] = [x, y, ch, fg, bg];
 	
 	if (this._dirty === true) { return; } /* will already redraw everything */
 	if (!this._dirty) { this._dirty = {}; } /* first! */
 	this._dirty[x+","+y] = true;
+
 }
 
 /**
@@ -859,7 +863,7 @@ ROT.Display.prototype.drawText = function(x, y, text, maxWidth) {
 	if (!maxWidth) { maxWidth = this._options.width-x; }
 
 	var tokens = ROT.Text.tokenize(text, maxWidth);
-
+//    console.log("text,",text);
 	while (tokens.length) { /* interpret tokenized opcode stream */
 		var token = tokens.shift();
 		switch (token.type) {
@@ -887,11 +891,32 @@ ROT.Display.prototype.drawText = function(x, y, text, maxWidth) {
 
 	return lines;
 }
+ROT.Display.prototype.drawImage = function(x,y,src){
+    var img = new Image;
+    img.src = src;
+
+    this._spacingX = Math.ceil(this._options.spacing * img.width);
+    this._spacingY = Math.ceil(this._options.spacing * img.height);
+
+    this._context.canvas.width = this._options.width * this._spacingX;
+    this._context.canvas.height = this._options.height * this._spacingY;
+
+    var context = this._backend._context; //container.getContext('2d');
+    
+    var spacingX = this._spacingX; // cannot access 'this' from inside the onload function.
+    var spacingY = this._spacingY;
+
+    img.onload = function(){ context.drawImage(img,x*spacingX , y*spacingY) };    
+}
+
+
+
 
 /**
  * Timer tick: update dirty parts
  */
 ROT.Display.prototype._tick = function() {
+//    console.log("tick..");
 	if (!this._dirty) { return; }
 
 	if (this._dirty === true) { /* draw all */
@@ -900,6 +925,7 @@ ROT.Display.prototype._tick = function() {
 
 		for (var id in this._data) { /* redraw cached data */
 			this._draw(id, false);
+		   // console.log(id.length,id);
 		}
 
 	} else { /* draw only dirty */
@@ -917,6 +943,10 @@ ROT.Display.prototype._tick = function() {
  */
 ROT.Display.prototype._draw = function(key, clearBefore) {
 	var data = this._data[key];
+//    console.log(data, data.length);
+    if(data.length == 6){
+
+    }
 	if (data[4] != this._options.bg) { clearBefore = true; }
 
 	this._backend.draw(data, clearBefore);
@@ -964,8 +994,8 @@ ROT.Display.Rect.prototype.compute = function(options) {
 	this._options = options;
 
 	var charWidth = Math.ceil(this._context.measureText("W").width);
-	this._spacingX = Math.ceil(options.spacing * charWidth);
-	this._spacingY = Math.ceil(options.spacing * options.fontSize);
+	this._spacingX = Math.ceil(options.spacing * charWidth *2);
+	this._spacingY = Math.ceil(options.spacing * options.fontSize * 2);
 	this._context.canvas.width = options.width * this._spacingX;
 	this._context.canvas.height = options.height * this._spacingY;
 }
@@ -1006,7 +1036,7 @@ ROT.Display.Rect.prototype._drawWithCache = function(data, clearBefore) {
 		}
 		this._canvasCache[hash] = canvas;
 	}
-	
+	console.log("draw...");
 	this._context.drawImage(canvas, x*this._spacingX, y*this._spacingY);
 }
 
@@ -1090,10 +1120,11 @@ ROT.Display.Hex.prototype.draw = function(data, clearBefore) {
 
 	var cx = (x+1) * this._spacingX;
 	var cy = y * this._spacingY + this._hexSize;
-
+    console.log("cx:",cx,"cy",cy);
 	if (clearBefore) { 
 		this._context.fillStyle = bg;
 		this._fill(cx, cy);
+
 	}
 	
 	if (!ch) { return; }
@@ -2244,6 +2275,7 @@ ROT.Map.Digger.prototype.create = function(callback) {
 		var x = parseInt(parts[0]);
 		var y = parseInt(parts[1]);
 		var dir = this._getDiggingDirection(x, y);
+
 		if (!dir) { continue; } /* this wall is not suitable */
 		
 //		console.log("wall", x, y);

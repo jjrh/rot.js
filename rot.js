@@ -736,6 +736,7 @@ ROT.Display.prototype.DEBUG = function(x, y, what) {
  * Clear the whole display (cover it with background color)
  */
 ROT.Display.prototype.clear = function() {
+    console.log("ROT.Display.clear()");
 	this._data = {};
 	this._dirty = true;
 }
@@ -828,12 +829,12 @@ ROT.Display.prototype.eventToPosition = function(e) {
  * @param {string} [bg] background color
  */
 ROT.Display.prototype.draw = function(x, y, ch, fg, bg) {
+    console.log("ROT.DIsplay.draw");
 //    console.log("ROT.Display.prototype.draw")
 	if (!fg) { fg = this._options.fg; }
 	if (!bg) { bg = this._options.bg; }
-        console.log("ch:","y")
-    ch="y"
-	this._data[x+","+y] = [x, y, ch, fg, bg];
+
+    this._data[x+","+y] = [x, y, ch, fg, bg];
 	
 	if (this._dirty === true) { return; } /* will already redraw everything */
 	if (!this._dirty) { this._dirty = {}; } /* first! */
@@ -850,6 +851,7 @@ ROT.Display.prototype.draw = function(x, y, ch, fg, bg) {
  * @returns {int} lines drawn
  */
 ROT.Display.prototype.drawText = function(x, y, text, maxWidth) {
+    console.log("drawText");
 	var fg = null;
 	var bg = null;
 	var cx = x;
@@ -858,7 +860,7 @@ ROT.Display.prototype.drawText = function(x, y, text, maxWidth) {
 	if (!maxWidth) { maxWidth = this._options.width-x; }
 
 	var tokens = ROT.Text.tokenize(text, maxWidth);
-//    console.log("text,",text);
+    //console.log("text,",text);
 	while (tokens.length) { /* interpret tokenized opcode stream */
 		var token = tokens.shift();
 		switch (token.type) {
@@ -887,6 +889,8 @@ ROT.Display.prototype.drawText = function(x, y, text, maxWidth) {
 	return lines;
 }
 ROT.Display.prototype.drawImage = function(x,y,src){
+    console.log("ROT.Display.drawImage");
+    //console.log("draw image: (x,"+x+" y,"+y+" src,"+src);
     var img = new Image;
     img.src = src;
 
@@ -912,19 +916,22 @@ ROT.Display.prototype.drawImage = function(x,y,src){
  */
 ROT.Display.prototype._tick = function() {
 //    console.log("tick..");
-	if (!this._dirty) { return; }
+	if (!this._dirty) {  return; }
 
 	if (this._dirty === true) { /* draw all */
-		this._context.fillStyle = this._options.bg;
-		this._context.fillRect(0, 0, this._context.canvas.width, this._context.canvas.height);
+	//	this._context.fillStyle = this._options.bg;
+	//	this._context.fillRect(0, 0, this._context.canvas.width, this._context.canvas.height);
 
 		for (var id in this._data) { /* redraw cached data */
+		    console.log("redrawing cached data (_tick)");
 			this._draw(id, false);
+
 		   // console.log(id.length,id);
 		}
 
 	} else { /* draw only dirty */
 		for (var key in this._dirty) {
+		    console.log("drawing only dirty (_tick)");
 			this._draw(key, true);
 		}
 	}
@@ -937,14 +944,21 @@ ROT.Display.prototype._tick = function() {
  * @param {bool} clearBefore Is it necessary to clean before?
  */
 ROT.Display.prototype._draw = function(key, clearBefore) {
-	var data = this._data[key];
-//    console.log(data, data.length);
-    if(data.length == 6){
-
-    }
+    console.log("ROT.Display._draw");
+    try{
+    	var data = this._data[key];
+	console.log(this._data);
+	console.log(data);
+	
+	if(data.length == 6){
+    	    console.log("???");
+	}
 	if (data[4] != this._options.bg) { clearBefore = true; }
-
+	
 	this._backend.draw(data, clearBefore);
+    } catch(e){
+	console.log(key);
+    }
 }
 /**
  * @class Abstract display backend module
@@ -973,6 +987,7 @@ ROT.Display.Backend.prototype.eventToPosition = function(x, y) {
  * @private
  */
 ROT.Display.Rect = function(context) {
+    console.log("ROT.Display.Rect");
 	ROT.Display.Backend.call(this, context);
 	
 	this._spacingX = 0;
@@ -996,6 +1011,7 @@ ROT.Display.Rect.prototype.compute = function(options) {
 }
 
 ROT.Display.Rect.prototype.draw = function(data, clearBefore) {
+    console.log("draw");
 	if (this.constructor.cache) {
 		this._drawWithCache(data, clearBefore);
 	} else {
@@ -1004,12 +1020,13 @@ ROT.Display.Rect.prototype.draw = function(data, clearBefore) {
 }
 
 ROT.Display.Rect.prototype._drawWithCache = function(data, clearBefore) {
+    console.log("_drawWithCache")
 	var x = data[0];
 	var y = data[1];
 	var ch = data[2];
 	var fg = data[3];
 	var bg = data[4];
-
+    console.log(data);
 	var hash = ""+ch+fg+bg;
 	if (hash in this._canvasCache) {
 		var canvas = this._canvasCache[hash];
@@ -1036,6 +1053,7 @@ ROT.Display.Rect.prototype._drawWithCache = function(data, clearBefore) {
 }
 
 ROT.Display.Rect.prototype._drawNoCache = function(data, clearBefore) {
+    console.log("_drawNoCache");
 	var x = data[0];
 	var y = data[1];
 	var ch = data[2];
@@ -1107,6 +1125,7 @@ ROT.Display.Hex.prototype.compute = function(options) {
 }
 
 ROT.Display.Hex.prototype.draw = function(data, clearBefore) {
+    console.log("ROT.Display.Hex.draw");
 	var x = data[0];
 	var y = data[1];
 	var ch = data[2];
@@ -1170,6 +1189,7 @@ ROT.Display.Hex.prototype.eventToPosition = function(x, y) {
 }
 
 ROT.Display.Hex.prototype._fill = function(cx, cy) {
+    console.log("ROT.Display.Hex._fill");
 	var a = this._hexSize;
 	var b = this._options.border;
 	

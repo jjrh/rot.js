@@ -12,6 +12,7 @@ var Game = {
     player: null,
 
     init: function() {
+	console.log("init called");
 	this.display = new ROT.Display();
 	document.body.appendChild(this.display.getContainer());
 	this._generateMap();
@@ -36,13 +37,15 @@ var Game = {
 	    var key = x+","+y;
             if (value) { 
 		// console.log(value);
-		this.map[key] = "gfx/brick_gray1.png";//"o";
+		this.map[key] = "."; //"gfx/brick_gray1.png";//"o";
 		return; 
 	    } /* do not store walls */
 	    else{
 		console.log("else");
 		freeCells.push(key);
-		this.map[key] = "gfx/lair1.png";//"o";
+//		this.map[key] = "#" 
+		this.map[key] = "gfx/lair1.png";
+		//console.log(this.map[key]);
 	    }
 	}
 	digger.create(digCallback.bind(this));
@@ -72,12 +75,17 @@ var Game = {
             var y = parseInt(parts[1]);
 	    // this.display._spacingX = 64;
 	    // this.display._spacingY = 64;
-            this.display.drawImage(x, y,this.map[key]);
+	    if(this.map[key].length == 1){
+		this.display.drawText(x,y,this.map[key]);
+		console.log("drawing text");
+	    }else{    
+		this.display.drawImage(x, y,this.map[key]);
+		}
 	    
 	    //this.display.draw(x, y, "x" );
 
 	}
-	this.player._draw();
+	//this.player._draw();
 	
     },
 
@@ -91,6 +99,7 @@ var Game = {
 	var x = parseInt(parts[0]);
 	var y = parseInt(parts[1]);
 	this.player = new Player(x, y);
+	this.player._draw()
 
     },
 }
@@ -102,7 +111,9 @@ var Player = function(x, y) {
 }
  
 Player.prototype._draw = function() {
-    Game.display.drawImage(this._x, this._y, "gfx/unseen_item.png");// "#ff0");
+    console.log("Player._draw");
+//    Game.display.drawText(this._x, this._y, "@");
+    Game.display.drawImage(this._x, this._y, "../../crawl-tiles/player/base/human_f.png");// "#ff0");
 }
 
 Player.prototype.act = function() {
@@ -112,7 +123,7 @@ Player.prototype.act = function() {
 }
 
 Player.prototype.handleEvent = function(e) {
-    console.log(e);
+//    console.log(e);
 
     var keyMap = {};
     keyMap[38] = 0;
@@ -126,7 +137,7 @@ Player.prototype.handleEvent = function(e) {
     
     var code = e.keyCode;
     
-    if (!(code in keyMap)) { return; }
+    if (!(code in keyMap)) { console.log("not in keymap"); return; }
     
     var diff = ROT.DIRS[8][keyMap[code]];
     var newX = this._x + diff[0];
@@ -135,8 +146,9 @@ Player.prototype.handleEvent = function(e) {
     var newKey = newX + "," + newY;
     if (!(newKey in Game.map)) { return; } /* cannot move in this direction */
     /* process user input */
-
-    Game.display.draw(this._x, this._y, Game.map[this._x+","+this._y]);
+    console.log("Game.map[this._x=="+this._x+",this._y=="+this._y+"]",Game.map[this._x+","+this._y]);
+    Game.display._drawImage(this._x, this._y, Game.map[this._x+","+this._y]);
+//    Game._drawWholeMap();
     this._x = newX;
     this._y = newY;
     this._draw();
@@ -147,7 +159,7 @@ Player.prototype.handleEvent = function(e) {
  
 
 
-Game.init();
+//Game.init();
 
 // var freeCells =[];
 // Game.map = {};
